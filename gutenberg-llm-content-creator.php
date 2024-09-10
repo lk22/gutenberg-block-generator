@@ -3,7 +3,7 @@
 Plugin Name: Gutenberg LLM Content Generator
 Description: Tilføjer dynamisk indholdsgenerering ved hjælp af en LLM til Gutenberg Editor.
 Version: 1.0
-Author: Dit Navn
+Author: Leo Knudsen
 */
 
 if ( ! defined( 'ABSPATH' ) ) {
