@@ -38,7 +38,7 @@ add_action( 'rest_api_init', 'gutenberg_llm_register_rest_route' );
 function gutenberg_llm_generate_content(WP_REST_Request $request) {
     $prompt = $request->get_param('prompt');
 
-    $api_key = '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';
+    $api_key = get_option('OPEN_API_KEY');
     $url = 'https://api.openai.com/v1/chat/completions';
     $data = [
         'model' => 'gpt-3.5-turbo',
