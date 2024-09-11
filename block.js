@@ -1,6 +1,7 @@
 (function(blocks, element, editor) {
     var el = element.createElement;
     var TextControl = wp.components.TextControl;
+    var WYSIWYG = wp.editor.RichText;
     var useState = wp.element.useState;
     var dispatch = wp.data.dispatch;
     var useDispatch = wp.data.useDispatch;
@@ -34,22 +35,30 @@
                     method: 'POST',
                     data: { prompt: attributes.prompt }
                 }).then(response => {
-                    // const currentContent = select('core/editor').getEditedPostContent()
-                    // const newContent = currentContent + response.content;
-
-                    // console.log({newContent, currentContent, response})
-
-                    // setAttributes({ content: response.content });
-                    // //dispatch('core/editor').editPost({ content: newContent })
-                    // setLoading(false);
+                    console.log(response)
                     const genereatedContent = response.content;
 
-                    const newBlock = wp.blocks.createBlock('core/paragraph', {
-                        content: genereatedContent
-                    })
+                    const blocks = wp.blocks.parse(genereatedContent);
 
-                    replaceBlock(props.clientId, newBlock);
-                })
+                    // create a new block with the generated content
+                    const clientId = blocks[0].clientId;
+
+                    // insert the new block
+                    dispatch('core/block-editor').insertBlock(blocks[0], props.clientId);
+
+                    // if the first block has inner blocks we need to add them to the new block
+                    if (blocks[0].innerBlocks) {
+                        blocks[0].innerBlocks.forEach(innerBlock => {
+                            dispatch('core/block-editor').insertBlock(innerBlock, clientId);
+                        });
+                    }
+
+                    setLoading(false);
+
+                }).catch(error => {
+                    console.error(error);
+                    setLoading(false);
+                });
             }
 
             return el('div', {},

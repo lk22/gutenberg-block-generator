@@ -38,14 +38,14 @@ add_action( 'rest_api_init', 'gutenberg_llm_register_rest_route' );
 function gutenberg_llm_generate_content(WP_REST_Request $request) {
     $prompt = $request->get_param('prompt');
 
-    $api_key = get_option('OPEN_AI_API_KEY'); 
+    $api_key = get_option('OPEN_AI_API_KEY');
     $url = 'https://api.openai.com/v1/chat/completions';
     $data = [
         'model' => 'gpt-3.5-turbo',
         'messages' => [
             [
                 "role" => "system",
-                "content" => "Du er en kodegenerator. Du skal kun generere ren kode baseret på brugerens prompt. Medtag ikke forklaringer, kommentarer eller tekst uden for koden."
+                "content" => "Du er en kodegenerator. Du skal kun generere ren kode baseret på brugerens prompt. Medtag ikke forklaringer, kommentarer eller tekst uden for koden. koden skal være i korrekt struktur og syntaks."
             ],
             [
                 "role" => "user",
@@ -70,10 +70,10 @@ function gutenberg_llm_generate_content(WP_REST_Request $request) {
 
     $body = wp_remote_retrieve_body($response);
     $result = json_decode($body ,true);
+
     $generated_code = extract_code_from_response($result["choices"][0]["message"]["content"]);
 
     return array(
-        "blocktype" => "core/paragraph",
         'content' => $generated_code
     );
 }
