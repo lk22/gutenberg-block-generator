@@ -61,6 +61,19 @@
                 });
             }
 
+            const savePrompt = () => {
+                setLoading(true)
+                wp.apiFetch({
+                    url: window.location.origin + "/wp-json/llm/save-prompt",
+                    method: "POST",
+                    data: {
+                        prompt: attributes.prompt
+                    }
+                }).then(response => {
+                    console.log(response)
+                })
+            }
+
             return el('div', {},
                 el(TextControl, {
                     label: 'Indtast en prompt',
@@ -68,9 +81,13 @@
                     onChange: (value) => setAttributes({ prompt: value })
                 }),
                 el('button', {
+                    onClick: savePrompt,
+                    disabled: loading
+                }, loading ? 'saving...' : 'Save Prompt'),
+                el('button', {
                     onClick: generateContent,
                     disabled: loading
-                }, loading ? 'Genererer...' : 'Generér indhold'),
+                }, loading ? 'Generating...' : 'Generate content'),
                 el('div', { className: 'generated-content' },
                     // Viser det genererede indhold i editoren
                     el(RawHTML, {}, attributes.content)

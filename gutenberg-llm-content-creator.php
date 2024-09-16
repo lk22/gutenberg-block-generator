@@ -38,15 +38,39 @@ if ( ! function_exists('gutenberg_llm_register_rest_route') ) {
      * @return void
      */
     function gutenberg_llm_register_rest_route(): void {
+        register_rest_route( 'll', '/get-prompts', array(
+            'methods' => 'GET',
+            'callback' => 'gutenberg_llm_get_prompts',
+            'permission_callback' => '__return_true'
+        ));
+        
         register_rest_route( 'llm/v1', '/generate/', array(
             'methods' => 'POST',
             'callback' => 'gutenberg_llm_generate_content',
+            'permission_callback' => '__return_true'
+        ));
+
+        register_rest_route('llm/v1', '/save-prompt/', array(
+            'methods' => 'POST',
+            'callback' => 'gutenberg_llm_save_prompt',
             'permission_callback' => '__return_true'
         ));
     }
 }
 
 add_action( 'rest_api_init', 'gutenberg_llm_register_rest_route' );
+
+if ( ! function_exists('gutenberg_llm_get_prompts') ) {
+    function gutenberg_llm_get_prompts(WP_REST_Request $request) {
+        global $wpdb;
+
+        $prompts = $wpdb->get_results(
+            "SELECT prompt FROM " . $wpdb->prefix . "prompts"
+        );
+
+        return ["prompts" => $prompts];
+    }
+}
 
 if ( ! function_exists('gutenberg_llm_generate_content') ) {
     /**
@@ -66,12 +90,12 @@ if ( ! function_exists('gutenberg_llm_generate_content') ) {
             'messages' => [
                 [
                     "role" => "system",
-                    "content" => "Du er en kodegenerator. Du skal kun generere ren kode baseret på brugerens prompt. Medtag ikke forklaringer, kommentarer eller tekst uden for koden. koden skal være i korrekt struktur og syntaks."
+                    "content" => "You are a code generator assistant. you are helping with generating gutenberg blocks for WordPress."
                 ],
                 [
                     "role" => "user",
-                    "content" => "Generer kun WordPress Gutenberg HTML blokke uden forklaringer til at " . $prompt
-                ]
+                    "content" => "Only generate WordPress Gutenberg HTML blocks without explanations, " . $prompt
+                ] 
             ],
             'max_tokens' => 1000,
             'temperature' => 0.2,
@@ -91,7 +115,6 @@ if ( ! function_exists('gutenberg_llm_generate_content') ) {
 
         $body = wp_remote_retrieve_body($response);
         $result = json_decode($body ,true);
-
         $generated_code = extract_code_from_response($result["choices"][0]["message"]["content"]);
 
         return array(
@@ -120,3 +143,19 @@ if ( ! function_exists('extract_code_from_response') ) {
         return $text;
     }
 }
+
+if ( ! function_exists('setup_prompt_database_table') ) {
+    function setup_prompt_database_table() {
+        global $wpdb;
+
+        $wpdb->query(
+            "CREATE TABLE IF NOT EXISTS " . $wpdb->prefix . "prompts (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                prompt TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;"
+        );
+    }
+}
+
+add_action('init', 'setup_prompt_database_table');
